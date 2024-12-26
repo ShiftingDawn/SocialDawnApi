@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { LoginDTO } from "./login.dto";
@@ -7,6 +7,7 @@ import { User } from "../user/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Session } from "./session.entity";
 import { Repository } from "typeorm";
+import { ChangePasswordDTO } from "./changepassword.dto";
 
 @Injectable()
 export class AuthService {
@@ -45,5 +46,15 @@ export class AuthService {
 		const newTokens = await this.createTokens(session.user);
 		await this.sessionRepository.delete({ refreshToken });
 		return newTokens;
+	}
+
+	async changePassword(user: User, data: ChangePasswordDTO) {
+		if (!bcrypt.compareSync(data.oldPassword, user.password)) {
+			throw new UnauthorizedException();
+		}
+		if (data.newPassword !== data.confirmPassword) {
+			throw new BadRequestException("passwords_do_not_match");
+		}
+		await this.userService.setPassword(user, data.newPassword);
 	}
 }

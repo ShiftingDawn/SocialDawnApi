@@ -32,4 +32,9 @@ export class UserService {
 		});
 		await this.userRepository.save(user);
 	}
+
+	async setPassword(user: User, password: string) {
+		user.password = bcrypt.hashSync(password, 12);
+		await this.userRepository.save(user);
+	}
 }

@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Post, Res, UnauthorizedException, UseGuards } from "@nestjs/common";
+import { Body, Controller, HttpStatus, Post, Put, Res, UnauthorizedException } from "@nestjs/common";
 import { Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginDTO } from "./login.dto";
-import { AuthGuard } from "./auth.guard";
 import { Public } from "../public";
 import { Cookies } from "../cookies.decorator";
+import { Self } from "../user/self.decorator";
+import { User } from "../user/user.entity";
+import { ChangePasswordDTO } from "./changepassword.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -44,7 +46,8 @@ export class AuthController {
 		}
 	}
 
-	@UseGuards(AuthGuard)
-	@Get("test")
-	testAuth() {}
+	@Put("password")
+	async changePassword(@Self() user: User, @Body() body: ChangePasswordDTO) {
+		await this.authService.changePassword(user, body);
+	}
 }

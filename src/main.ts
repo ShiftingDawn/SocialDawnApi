@@ -1,11 +1,19 @@
 import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
+import { BadRequestException, ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import * as cookieParser from "cookie-parser";
+import { ValidationError } from "class-validator";
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
-	app.useGlobalPipes(new ValidationPipe());
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			stopAtFirstError: true,
+			exceptionFactory: validationExceptionFactory,
+		}),
+	);
 	app.enableCors({
 		origin: ["http://localhost:5173"],
 		credentials: true,
@@ -15,3 +23,20 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+function validationExceptionFactory(errors: ValidationError[]) {
+	if (errors.length > 0 && errors[0].constraints) {
+		const vals = Object.values(errors[0].constraints);
+		if (vals.length > 0) {
+			return new BadRequestException({
+				message: vals[0],
+				error: "Bad Request",
+				statusCode: 400,
+			});
+		}
+	}
+	return new BadRequestException({
+		error: "Bad Request",
+		statusCode: 400,
+	});
+}
