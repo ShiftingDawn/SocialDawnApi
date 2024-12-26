@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 import { FriendService } from "./friend.service";
 import { Self } from "../user/self.decorator";
 import { User } from "../user/user.entity";
@@ -7,6 +7,11 @@ import { AddFriendDTO } from "./addfriend.dto";
 @Controller("friend")
 export class FriendController {
 	constructor(private readonly friendService: FriendService) {}
+
+	@Get()
+	listFriends(@Self() self: User, @Query("online") onlineOnly: boolean) {
+		return this.friendService.listFriends(self, onlineOnly);
+	}
 
 	@Post()
 	async addFriend(@Self() self: User, @Body() body: AddFriendDTO) {

@@ -7,7 +7,8 @@ import { Friend } from "./friend.entity";
 import { UserService } from "../user/user.service";
 import { User } from "../user/user.entity";
 import { FriendRequestResponseDTO } from "./friendrequest.dto";
-import { request } from "express";
+import { FriendDTO } from "./friend.dto";
+import { getGravatarLink } from "../utils";
 
 @Injectable()
 export class FriendService {
@@ -18,6 +19,20 @@ export class FriendService {
 		@InjectRepository(Friend)
 		private readonly friendRepository: Repository<Friend>,
 	) {}
+
+	async listFriends(user: User, onlineOnly: boolean): Promise<FriendDTO[]> {
+		const friends = await this.friendRepository.find({
+			where: { owner: user },
+			relations: ["friend"],
+		});
+		//TODO handle onlineOnly
+		return friends.map((friend) => ({
+			friendId: friend.friend.userId,
+			username: friend.friend.username,
+			thumbnail: getGravatarLink(friend.friend.email),
+			friendsSince: friend.createdAt.getTime(),
+		}));
+	}
 
 	async addFriend(self: User, data: AddFriendDTO) {
 		const foundUser = await this.userService.getUserByUsername(data.username);

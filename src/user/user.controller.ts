@@ -5,7 +5,7 @@ import { Public } from "../public";
 import { Self } from "./self.decorator";
 import { User } from "./user.entity";
 import { UserProfileDTO } from "./profile.dto";
-import * as crypto from "node:crypto";
+import { getGravatarLink } from "../utils";
 
 @Controller("user")
 export class UserController {
@@ -20,11 +20,10 @@ export class UserController {
 	@Get("profile")
 	getSelfProfile(@Self() user: User): UserProfileDTO {
 		const { username, email } = user;
-		const emailHash = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 		return {
 			username,
 			email,
-			thumbnail: `https://www.gravatar.com/avatar/${emailHash}?s=64&d=identicon`,
+			thumbnail: getGravatarLink(email),
 		};
 	}
 }
