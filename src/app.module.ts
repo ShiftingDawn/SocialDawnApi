@@ -4,8 +4,8 @@ import { AppService } from "./app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { User } from "./user/user.entity";
 import { UserModule } from "./user/user.module";
-import { AuthService } from "./auth/auth.service";
 import { AuthModule } from "./auth/auth.module";
+import { Session } from "./auth/session.entity";
 
 @Module({
 	imports: [
@@ -16,13 +16,13 @@ import { AuthModule } from "./auth/auth.module";
 			username: "socialdawn",
 			password: "socialdawn",
 			database: "socialdawn",
-			entities: [User],
+			entities: [User, Session],
 			synchronize: process.env.NODE_ENV !== "production",
 		}),
 		AuthModule,
 		UserModule,
 	],
 	controllers: [AppController],
-	providers: [AppService, AuthService],
+	providers: [AppService],
 })
 export class AppModule {}

@@ -5,12 +5,15 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { APP_GUARD } from "@nestjs/core";
 import { AuthGuard } from "./auth.guard";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Session } from "./session.entity";
 
 export const jwtSecret = process.env.JWT_SECRET ?? " supersecret";
 
 @Module({
 	imports: [
 		UserModule,
+		TypeOrmModule.forFeature([Session]),
 		JwtModule.register({
 			global: true,
 			secret: jwtSecret,

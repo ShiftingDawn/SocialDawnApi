@@ -12,6 +12,10 @@ export class UserService {
 		private readonly userRepository: Repository<User>,
 	) {}
 
+	getUserById(userId: string): Promise<User | null> {
+		return this.userRepository.findOneBy({ userId });
+	}
+
 	getUserByEmail(email: string) {
 		return this.userRepository.findOneBy({ email });
 	}
