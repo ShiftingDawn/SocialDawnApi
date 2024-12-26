@@ -6,6 +6,10 @@ import { User } from "./user/user.entity";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { Session } from "./auth/session.entity";
+import { FriendModule } from "./friend/friend.module";
+import { FriendRequest } from "./friend/friendrequest.entity";
+import { Friend } from "./friend/friend.entity";
+import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 
 @Module({
 	imports: [
@@ -16,11 +20,13 @@ import { Session } from "./auth/session.entity";
 			username: "socialdawn",
 			password: "socialdawn",
 			database: "socialdawn",
-			entities: [User, Session],
+			entities: [User, Session, FriendRequest, Friend],
 			synchronize: process.env.NODE_ENV !== "production",
+			namingStrategy: new SnakeNamingStrategy(),
 		}),
 		AuthModule,
 		UserModule,
+		FriendModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

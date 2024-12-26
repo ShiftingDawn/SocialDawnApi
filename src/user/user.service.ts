@@ -20,6 +20,10 @@ export class UserService {
 		return this.userRepository.findOneBy({ email });
 	}
 
+	getUserByUsername(username: string) {
+		return this.userRepository.findOneBy({ username });
+	}
+
 	async register(data: RegisterDTO): Promise<void> {
 		const existingUser = await this.getUserByEmail(data.email);
 		if (existingUser) {
