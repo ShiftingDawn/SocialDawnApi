@@ -13,13 +13,28 @@ export class FriendController {
 		await this.friendService.addFriend(self, body);
 	}
 
-	@Get("/request")
+	@Get("/request/received")
+	getReceivedRequests(@Self() self: User) {
+		return this.friendService.getReceivedFriendRequests(self);
+	}
+
+	@Post("/request/received/:id")
+	acceptReceivedRequest(@Self() self: User, @Param("id") id: string) {
+		return this.friendService.acceptReceivedFriendRequest(self, id);
+	}
+
+	@Delete("/request/received/:id")
+	deleteReceivedRequest(@Self() self: User, @Param("id") id: string) {
+		return this.friendService.deleteReceivedFriendRequest(self, id);
+	}
+
+	@Get("/request/sent")
 	getSentRequests(@Self() self: User) {
 		return this.friendService.getSentFriendRequests(self);
 	}
 
-	@Delete("/request/:id")
-	deleteRequest(@Self() self: User, @Param("id") id: string) {
-		return this.friendService.deleteFriendRequests(self, id);
+	@Delete("/request/sent/:id")
+	deleteSentRequest(@Self() self: User, @Param("id") id: string) {
+		return this.friendService.deleteSentFriendRequest(self, id);
 	}
 }

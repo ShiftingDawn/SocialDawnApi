@@ -34,6 +34,48 @@ export class FriendService {
 		await this.friendRequestRepository.save(request);
 	}
 
+	async getReceivedFriendRequests(user: User): Promise<FriendRequestResponseDTO[]> {
+		const requests = await this.friendRequestRepository.find({
+			where: { receiver: user },
+			relations: ["sender"],
+			order: { createdAt: "DESC" },
+		});
+		return requests.map((req) => ({
+			id: req.friendRequestId,
+			username: req.sender.username,
+			sentAt: req.createdAt.getTime(),
+		}));
+	}
+
+	async deleteReceivedFriendRequest(user: User, id: string) {
+		const result = await this.friendRequestRepository.delete({
+			friendRequestId: id,
+			receiver: user,
+		});
+		if (result.affected === 0) {
+			throw new NotFoundException();
+		}
+	}
+
+	async acceptReceivedFriendRequest(user: User, id: string) {
+		const result = await this.friendRequestRepository.findOne({
+			where: {
+				friendRequestId: id,
+				receiver: user,
+			},
+			relations: ["sender", "receiver"],
+		});
+		if (!result) {
+			throw new NotFoundException();
+		}
+		const friend = this.friendRepository.create({
+			owner: result.receiver,
+			friend: result.sender,
+		});
+		await this.friendRepository.save(friend);
+		await this.deleteReceivedFriendRequest(user, id);
+	}
+
 	async getSentFriendRequests(user: User): Promise<FriendRequestResponseDTO[]> {
 		const requests = await this.friendRequestRepository.find({
 			where: { sender: user },
@@ -47,7 +89,7 @@ export class FriendService {
 		}));
 	}
 
-	async deleteFriendRequests(user: User, id: string) {
+	async deleteSentFriendRequest(user: User, id: string) {
 		const result = await this.friendRequestRepository.delete({
 			friendRequestId: id,
 			sender: user,
