@@ -11,7 +11,7 @@ export class DmMessage {
 	@JoinColumn({ name: "dm_id" })
 	dm: Dm;
 
-	@OneToOne(() => User)
+	@ManyToOne(() => User)
 	@JoinColumn({ name: "sender_id" })
 	sender: User;
 

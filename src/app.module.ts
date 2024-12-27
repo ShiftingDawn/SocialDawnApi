@@ -13,6 +13,7 @@ import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 import { DmModule } from "./dm/dm.module";
 import { Dm } from "./dm/dm.entity";
 import { DmMessage } from "./dm/dmmessage.entity";
+import { AppGateway } from "./app.gateway";
 
 @Module({
 	imports: [
@@ -33,6 +34,6 @@ import { DmMessage } from "./dm/dmmessage.entity";
 		DmModule,
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [AppService, AppGateway],
 })
 export class AppModule {}

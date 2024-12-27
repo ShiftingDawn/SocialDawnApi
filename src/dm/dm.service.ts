@@ -4,7 +4,7 @@ import { UserService } from "../user/user.service";
 import { FriendService } from "../friend/friend.service";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Dm } from "./dm.entity";
-import { Repository } from "typeorm";
+import { LessThan, Repository } from "typeorm";
 import { DmMessage } from "./dmmessage.entity";
 import { DmDTO } from "./dm.dto";
 import { DmMessageDTO } from "./dmmessage.dto";
@@ -19,6 +19,13 @@ export class DmService {
 		@InjectRepository(DmMessage)
 		private readonly dmMessageRepository: Repository<DmMessage>,
 	) {}
+
+	async getDmByUserAndId(user: User, dmId: string): Promise<Dm | null> {
+		return this.dmRepository.findOneBy([
+			{ dmId, owner: user },
+			{ dmId, recipient: user },
+		]);
+	}
 
 	async getFriendDm(user: User, friendId: string): Promise<DmDTO> {
 		const friend = await this.friendService.getFriend(user, friendId);
@@ -47,18 +54,45 @@ export class DmService {
 		};
 	}
 
+	async addMessageToDm(user: User, dmId: string, message: string): Promise<DmMessage> {
+		const dm = await this.getDmByUserAndId(user, dmId);
+		if (!dm) {
+			throw new NotFoundException();
+		}
+		const msg = this.dmMessageRepository.create({
+			dm,
+			sender: user,
+			message,
+		});
+		await this.dmMessageRepository.save(msg);
+		return msg;
+	}
+
 	async getMessagesForDm(user: User, dmId: string, last: string, take: number): Promise<DmMessageDTO[]> {
 		const dm = await this.dmRepository.findOneBy({ dmId, owner: user });
 		if (!dm) {
 			throw new NotFoundException();
 		}
-		const messages = await this.dmMessageRepository.find({
-			where: { dm },
-			relations: ["sender"],
-			order: { sentAt: "DESC" },
-			skip: 0, //TODO fix
-			take: take > 0 ? take : 50,
-		});
+		let messages;
+		if (!last) {
+			messages = await this.dmMessageRepository.find({
+				where: { dm },
+				relations: ["sender"],
+				order: { sentAt: "DESC" },
+				take: take > 0 ? take : 50,
+			});
+		} else {
+			const lastMsg = await this.dmMessageRepository.findOneBy({ dm });
+			if (!lastMsg) {
+				throw new NotFoundException();
+			}
+			messages = await this.dmMessageRepository.find({
+				where: { dm, sentAt: LessThan(lastMsg.sentAt) },
+				relations: ["sender"],
+				order: { sentAt: "DESC" },
+				take: take > 0 ? take : 50,
+			});
+		}
 		return messages.map((msg) => ({
 			messageId: msg.messageId,
 			username: msg.sender.username,
