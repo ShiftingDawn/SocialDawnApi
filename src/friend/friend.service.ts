@@ -34,6 +34,10 @@ export class FriendService {
 		}));
 	}
 
+	getFriend(user: User, friendId: string) {
+		return this.friendRepository.findOneBy({ owner: user, friend: { userId: friendId } });
+	}
+
 	async addFriend(self: User, data: AddFriendDTO) {
 		const foundUser = await this.userService.getUserByUsername(data.username);
 		if (!foundUser) {

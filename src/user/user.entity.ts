@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Session } from "../auth/session.entity";
 import { FriendRequest } from "../friend/friendrequest.entity";
 import { Friend } from "../friend/friend.entity";

@@ -10,6 +10,9 @@ import { FriendModule } from "./friend/friend.module";
 import { FriendRequest } from "./friend/friendrequest.entity";
 import { Friend } from "./friend/friend.entity";
 import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+import { DmModule } from "./dm/dm.module";
+import { Dm } from "./dm/dm.entity";
+import { DmMessage } from "./dm/dmmessage.entity";
 
 @Module({
 	imports: [
@@ -20,13 +23,14 @@ import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 			username: "socialdawn",
 			password: "socialdawn",
 			database: "socialdawn",
-			entities: [User, Session, FriendRequest, Friend],
+			entities: [User, Session, FriendRequest, Friend, Dm, DmMessage],
 			synchronize: process.env.NODE_ENV !== "production",
 			namingStrategy: new SnakeNamingStrategy(),
 		}),
 		AuthModule,
 		UserModule,
 		FriendModule,
+		DmModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],
