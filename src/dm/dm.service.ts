@@ -22,8 +22,8 @@ export class DmService {
 
 	async getDmByUserAndId(user: User, dmId: string): Promise<Dm | null> {
 		return this.dmRepository.findOneBy([
-			{ dmId, owner: user },
-			{ dmId, recipient: user },
+			{ dmId, user1: user },
+			{ dmId, user2: user },
 		]);
 	}
 
@@ -36,16 +36,14 @@ export class DmService {
 		if (!friendUser) {
 			throw new NotFoundException();
 		}
-		let dm = await this.dmRepository.findOneBy({
-			owner: user,
-			recipient: friendUser,
-			isGroupChat: false,
-		});
+		let dm = await this.dmRepository.findOneBy([
+			{ user1: user, user2: friendUser },
+			{ user1: friendUser, user2: user },
+		]);
 		if (dm === null) {
 			dm = this.dmRepository.create({
-				owner: user,
-				recipient: friendUser,
-				isGroupChat: false,
+				user1: user,
+				user2: friendUser,
 			});
 			await this.dmRepository.save(dm);
 		}
@@ -69,7 +67,10 @@ export class DmService {
 	}
 
 	async getMessagesForDm(user: User, dmId: string, last: string, take: number): Promise<DmMessageDTO[]> {
-		const dm = await this.dmRepository.findOneBy({ dmId, owner: user });
+		const dm = await this.dmRepository.findOneBy([
+			{ dmId, user1: user },
+			{ dmId, user2: user },
+		]);
 		if (!dm) {
 			throw new NotFoundException();
 		}

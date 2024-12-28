@@ -25,6 +25,12 @@ export class AuthController {
 		return { accessToken };
 	}
 
+	@Post("destroy")
+	async destroy(@Self() user: User, @Cookies("rtk") refreshToken: string, @Res({ passthrough: true }) res: Response) {
+		await this.authService.destroySession(user, refreshToken);
+		res.clearCookie("rtk");
+	}
+
 	@Public()
 	@Post("refresh")
 	async refresh(@Cookies("rtk") refreshToken: string, @Res({ passthrough: true }) res: Response) {

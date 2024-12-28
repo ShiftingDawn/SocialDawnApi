@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "../user/user.entity";
 import { DmMessage } from "./dmmessage.entity";
 
@@ -8,15 +8,12 @@ export class Dm {
 	dmId: string;
 
 	@OneToOne(() => User)
-	@JoinColumn({ name: "owner_id" })
-	owner: User;
+	@JoinColumn({ name: "user1_id" })
+	user1: User;
 
 	@OneToOne(() => User)
-	@JoinColumn({ name: "recipient_id" })
-	recipient: User;
-
-	@Column({ default: false })
-	isGroupChat: boolean;
+	@JoinColumn({ name: "user2_id" })
+	user2: User;
 
 	@OneToMany(() => DmMessage, (msg) => msg.dm)
 	messages: DmMessage[];

@@ -26,6 +26,6 @@ export class User {
 	@OneToMany(() => FriendRequest, (session) => session.receiver)
 	receivedFriendRequests: FriendRequest[];
 
-	@OneToMany(() => Friend, (friend) => friend.owner)
+	@OneToMany(() => Friend, (friend) => friend.user1)
 	friends: Friend[];
 }

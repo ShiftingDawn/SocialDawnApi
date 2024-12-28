@@ -1,4 +1,4 @@
-import { CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "../user/user.entity";
 
 @Entity()
@@ -6,13 +6,13 @@ export class Friend {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	friendId: string;
 
-	@ManyToOne(() => User, (user) => user.friends)
-	@JoinColumn({ name: "owner_id" })
-	owner: User;
+	@ManyToOne(() => User)
+	@JoinColumn({ name: "user1_id" })
+	user1: User;
 
-	@OneToOne(() => User)
-	@JoinColumn({ name: "friend_id" })
-	friend: User;
+	@ManyToOne(() => User)
+	@JoinColumn({ name: "user2_id" })
+	user2: User;
 
 	@CreateDateColumn()
 	createdAt: Date;

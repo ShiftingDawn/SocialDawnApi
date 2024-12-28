@@ -7,3 +7,7 @@ services:
       POSTGRES_DB: "socialdawn"
       POSTGRES_PASSWORD: "socialdawn"
       POSTGRES_USER: "socialdawn"
+    volumes:
+      - "pgtestdata:/var/lib/postgresql/data/pgdata"
+volumes:
+  pgtestdata:

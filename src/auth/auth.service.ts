@@ -29,6 +29,10 @@ export class AuthService {
 		return await this.createTokens(user);
 	}
 
+	async destroySession(user: User, refreshToken: string) {
+		await this.sessionRepository.delete({ user: user, refreshToken: refreshToken });
+	}
+
 	async createTokens(user: User): Promise<[string, string]> {
 		const accessToken = await this.jwtService.signAsync({ sub: user.userId });
 		const expiresAt = new Date();

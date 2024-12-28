@@ -22,20 +22,26 @@ export class FriendService {
 
 	async listFriends(user: User, onlineOnly: boolean): Promise<FriendDTO[]> {
 		const friends = await this.friendRepository.find({
-			where: { owner: user },
-			relations: ["friend"],
+			where: [{ user1: user }, { user2: user }],
+			relations: ["user1", "user2"],
 		});
 		//TODO handle onlineOnly
-		return friends.map((friend) => ({
-			friendId: friend.friend.userId,
-			username: friend.friend.username,
-			thumbnail: getGravatarLink(friend.friend.email),
-			friendsSince: friend.createdAt.getTime(),
-		}));
+		return friends.map((friend) => {
+			const friendUser = user.userId === friend.user1.userId ? friend.user2 : friend.user1;
+			return {
+				friendId: friendUser.userId,
+				username: friendUser.username,
+				thumbnail: getGravatarLink(friendUser.email),
+				friendsSince: friend.createdAt.getTime(),
+			};
+		});
 	}
 
 	getFriend(user: User, friendId: string) {
-		return this.friendRepository.findOneBy({ owner: user, friend: { userId: friendId } });
+		return this.friendRepository.findOneBy([
+			{ user1: user, user2: { userId: friendId } },
+			{ user1: { userId: friendId }, user2: user },
+		]);
 	}
 
 	async addFriend(self: User, data: AddFriendDTO) {
@@ -43,7 +49,7 @@ export class FriendService {
 		if (!foundUser) {
 			throw new BadRequestException("invalid_username");
 		}
-		if (await this.friendRepository.findOneBy({ owner: self, friend: foundUser })) {
+		if (await this.friendRepository.findOneBy({ user1: self, user2: foundUser })) {
 			throw new BadRequestException("already_friends");
 		}
 		if (await this.friendRequestRepository.findOneBy({ sender: self, receiver: foundUser })) {
@@ -88,8 +94,8 @@ export class FriendService {
 			throw new NotFoundException();
 		}
 		const friend = this.friendRepository.create({
-			owner: result.receiver,
-			friend: result.sender,
+			user1: result.receiver,
+			user2: result.sender,
 		});
 		await this.friendRepository.save(friend);
 		await this.deleteReceivedFriendRequest(user, id);
