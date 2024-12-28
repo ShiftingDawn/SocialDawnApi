@@ -1,14 +1,43 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
+import { Controller, Get, NotFoundException, Param, Query } from "@nestjs/common";
 import { DmService } from "./dm.service";
 import { Self } from "../user/self.decorator";
 import { User } from "../user/user.entity";
+import { DmDTO } from "./dm.dto";
+import { getGravatarLink } from "../utils";
 
 @Controller("dm")
 export class DmController {
 	constructor(private readonly dmService: DmService) {}
 
+	@Get()
+	async getExistingDms(@Self() self: User): Promise<DmDTO[]> {
+		const dms = await this.dmService.getExistingDms(self);
+		return dms.map((dm) => {
+			const dmUser = dm.user1.userId === self.userId ? dm.user2 : dm.user1;
+			return {
+				dmId: dm.dmId,
+				name: dmUser.username,
+				thumbnail: getGravatarLink(dmUser.email),
+			};
+		});
+	}
+
+	@Get("/:id")
+	async getDm(@Self() self: User, @Param("id") dmId: string): Promise<DmDTO> {
+		const dm = await this.dmService.getDmByUserAndId(self, dmId);
+		if (!dm) {
+			throw new NotFoundException();
+		}
+		const dmUser = dm.user1.userId === self.userId ? dm.user2 : dm.user1;
+		return {
+			dmId: dm.dmId,
+			name: dmUser.username,
+			thumbnail: getGravatarLink(dmUser.email),
+		};
+	}
+
 	@Get("/friend/:id")
-	getDm(@Self() self: User, @Param("id") friendId: string) {
+	getFriendDm(@Self() self: User, @Param("id") friendId: string): Promise<DmDTO> {
 		return this.dmService.getFriendDm(self, friendId);
 	}
 

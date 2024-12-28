@@ -72,6 +72,10 @@ export class FriendService {
 		}));
 	}
 
+	async getReceivedFriendRequestCount(user: User) {
+		return await this.friendRequestRepository.countBy({ receiver: user });
+	}
+
 	async deleteReceivedFriendRequest(user: User, id: string) {
 		const result = await this.friendRequestRepository.delete({
 			friendRequestId: id,
@@ -112,6 +116,10 @@ export class FriendService {
 			username: req.receiver.username,
 			sentAt: req.createdAt.getTime(),
 		}));
+	}
+
+	async getSentFriendRequestCount(user: User) {
+		return await this.friendRequestRepository.countBy({ sender: user });
 	}
 
 	async deleteSentFriendRequest(user: User, id: string) {

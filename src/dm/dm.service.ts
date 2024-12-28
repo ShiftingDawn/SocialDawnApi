@@ -8,6 +8,7 @@ import { LessThan, Repository } from "typeorm";
 import { DmMessage } from "./dmmessage.entity";
 import { DmDTO } from "./dm.dto";
 import { DmMessageDTO } from "./dmmessage.dto";
+import { getGravatarLink } from "../utils";
 
 @Injectable()
 export class DmService {
@@ -20,11 +21,21 @@ export class DmService {
 		private readonly dmMessageRepository: Repository<DmMessage>,
 	) {}
 
-	async getDmByUserAndId(user: User, dmId: string): Promise<Dm | null> {
-		return this.dmRepository.findOneBy([
-			{ dmId, user1: user },
-			{ dmId, user2: user },
-		]);
+	getDmByUserAndId(user: User, dmId: string): Promise<Dm | null> {
+		return this.dmRepository.findOne({
+			where: [
+				{ dmId, user1: user },
+				{ dmId, user2: user },
+			],
+			relations: ["user1", "user2"],
+		});
+	}
+
+	getExistingDms(user: User) {
+		return this.dmRepository.find({
+			where: [{ user1: user }, { user2: user }],
+			relations: ["user1", "user2"],
+		});
 	}
 
 	async getFriendDm(user: User, friendId: string): Promise<DmDTO> {
@@ -49,6 +60,8 @@ export class DmService {
 		}
 		return {
 			dmId: dm.dmId,
+			name: friendUser.username,
+			thumbnail: getGravatarLink(friendUser.email),
 		};
 	}
 

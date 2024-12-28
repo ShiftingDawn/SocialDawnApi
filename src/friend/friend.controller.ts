@@ -3,6 +3,7 @@ import { FriendService } from "./friend.service";
 import { Self } from "../user/self.decorator";
 import { User } from "../user/user.entity";
 import { AddFriendDTO } from "./addfriend.dto";
+import { FriendRequestCountDTO } from "./friendrequest.dto";
 
 @Controller("friend")
 export class FriendController {
@@ -36,6 +37,13 @@ export class FriendController {
 	@Get("/request/sent")
 	getSentRequests(@Self() self: User) {
 		return this.friendService.getSentFriendRequests(self);
+	}
+
+	@Get("/request/count")
+	async getReceivedRequestCount(@Self() self: User): Promise<FriendRequestCountDTO> {
+		const received = await this.friendService.getReceivedFriendRequestCount(self);
+		const sent = await this.friendService.getSentFriendRequestCount(self);
+		return { received, sent };
 	}
 
 	@Delete("/request/sent/:id")
