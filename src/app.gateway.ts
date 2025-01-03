@@ -2,8 +2,8 @@ import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSo
 import { CORS_OPTIONS } from "./constants";
 import { UseGuards } from "@nestjs/common";
 import { AuthGuard } from "./auth/auth.guard";
-import { Self } from "./user/self.decorator";
-import { User } from "./user/user.entity";
+import { Self } from "./self.decorator";
+import { UserEntity } from "./user/user.entity";
 import { DmService } from "./dm/dm.service";
 import { Server, Socket } from "socket.io";
 import { DmMessageDTO } from "./dm/dmmessage.dto";
@@ -17,7 +17,7 @@ export class AppGateway {
 	constructor(private readonly dmService: DmService) {}
 
 	@SubscribeMessage("dm_connect")
-	async connectDm(@ConnectedSocket() client: Socket, @Self() user: User, @MessageBody("dm") dmId: string) {
+	async connectDm(@ConnectedSocket() client: Socket, @Self() user: UserEntity, @MessageBody("dm") dmId: string) {
 		if (!user || !dmId) {
 			return;
 		}
@@ -28,7 +28,7 @@ export class AppGateway {
 	}
 
 	@SubscribeMessage("dm_disconnect")
-	async disconnectDm(@ConnectedSocket() client: Socket, @Self() user: User, @MessageBody("dm") dmId: string) {
+	async disconnectDm(@ConnectedSocket() client: Socket, @Self() user: UserEntity, @MessageBody("dm") dmId: string) {
 		if (!user || !dmId) {
 			return;
 		}
@@ -39,7 +39,7 @@ export class AppGateway {
 	}
 
 	@SubscribeMessage("dm_msg")
-	async receiveDmMessage(@Self() user: User, @MessageBody("dm") dmId: string, @MessageBody("msg") message: string) {
+	async receiveDmMessage(@Self() user: UserEntity, @MessageBody("dm") dmId: string, @MessageBody("msg") message: string) {
 		if (!user || !dmId || !message) {
 			return;
 		}

@@ -1,6 +1,15 @@
 POST http://localhost:3000/user/register
 Content-Type: application/x-www-form-urlencoded
 
-username = peerkoek33
-& password = Testtest1
-& email = test2@test.test
+username = test1
+    & password = Testtest1
+    & email = test1@test.test
+
+###
+
+POST http://localhost:3000/user/register
+Content-Type: application/x-www-form-urlencoded
+
+username = test2
+    & password = Testtest1
+    & email = test2@test.test

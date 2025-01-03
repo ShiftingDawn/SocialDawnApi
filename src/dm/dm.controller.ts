@@ -1,7 +1,7 @@
 import { Controller, Get, NotFoundException, Param, Query } from "@nestjs/common";
 import { DmService } from "./dm.service";
-import { Self } from "../user/self.decorator";
-import { User } from "../user/user.entity";
+import { Self } from "../self.decorator";
+import { UserEntity } from "../user/user.entity";
 import { DmDTO } from "./dm.dto";
 import { getGravatarLink } from "../utils";
 
@@ -10,7 +10,7 @@ export class DmController {
 	constructor(private readonly dmService: DmService) {}
 
 	@Get()
-	async getExistingDms(@Self() self: User): Promise<DmDTO[]> {
+	async getExistingDms(@Self() self: UserEntity): Promise<DmDTO[]> {
 		const dms = await this.dmService.getExistingDms(self);
 		return dms.map((dm) => {
 			const dmUser = dm.user1.userId === self.userId ? dm.user2 : dm.user1;
@@ -23,7 +23,7 @@ export class DmController {
 	}
 
 	@Get("/:id")
-	async getDm(@Self() self: User, @Param("id") dmId: string): Promise<DmDTO> {
+	async getDm(@Self() self: UserEntity, @Param("id") dmId: string): Promise<DmDTO> {
 		const dm = await this.dmService.getDmByUserAndId(self, dmId);
 		if (!dm) {
 			throw new NotFoundException();
@@ -37,13 +37,13 @@ export class DmController {
 	}
 
 	@Get("/friend/:id")
-	getFriendDm(@Self() self: User, @Param("id") friendId: string): Promise<DmDTO> {
+	getFriendDm(@Self() self: UserEntity, @Param("id") friendId: string): Promise<DmDTO> {
 		return this.dmService.getFriendDm(self, friendId);
 	}
 
 	@Get("/message/:id")
 	getMessages(
-		@Self() self: User,
+		@Self() self: UserEntity,
 		@Param("id") dmId: string,
 		@Query("last") lastKnown: string,
 		@Query("take") take: number,

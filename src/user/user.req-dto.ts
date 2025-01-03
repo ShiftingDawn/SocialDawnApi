@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsStrongPassword, Length, Matches } from "class-validator";
 
-export class RegisterDTO {
+export class CreateUserDTO {
 	@IsNotEmpty({ message: "invalid_username" })
 	@Length(3, 32, { message: "invalid_username" })
 	@Matches(/^[a-zA-Z0-9][a-zA-Z0-9-_]+[a-zA-Z0-9]$/)

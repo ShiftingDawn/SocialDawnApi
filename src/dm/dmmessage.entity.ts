@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "../user/user.entity";
+import { UserEntity } from "../user/user.entity";
 import { Dm } from "./dm.entity";
 
 @Entity()
@@ -11,9 +11,9 @@ export class DmMessage {
 	@JoinColumn({ name: "dm_id" })
 	dm: Dm;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => UserEntity)
 	@JoinColumn({ name: "sender_id" })
-	sender: User;
+	sender: UserEntity;
 
 	@OneToOne(() => DmMessage, { nullable: true })
 	@JoinColumn({ name: "response_of_id" })

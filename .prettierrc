@@ -5,5 +5,5 @@
 	"useTabs": true,
 	"tabWidth": 4,
 	"editorconfig": true,
-	"endOfLine": "lf"
+	"endOfLine": "auto"
 }

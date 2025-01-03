@@ -1,12 +1,12 @@
-import { Body, Controller, Post, Put, Res, UnauthorizedException } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post, Put, Res } from "@nestjs/common";
 import { Response } from "express";
 import { AuthService } from "./auth.service";
-import { LoginDTO } from "./login.dto";
-import { Public } from "../public";
-import { Cookies } from "../cookies.decorator";
-import { Self } from "../user/self.decorator";
-import { User } from "../user/user.entity";
-import { ChangePasswordDTO } from "./changepassword.dto";
+import { Public } from "@/public";
+import { Cookies } from "@/cookies.decorator";
+import { Self } from "@/self.decorator";
+import { UserEntity } from "@/user/user.entity";
+import { ChangePasswordRequestDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
+import { SESSION_COOKIE } from "@/constants";
 
 @Controller("auth")
 export class AuthController {
@@ -14,46 +14,33 @@ export class AuthController {
 
 	@Public()
 	@Post("login")
-	async login(@Body() body: LoginDTO, @Res({ passthrough: true }) res: Response) {
-		const [accessToken, refreshToken] = await this.authService.login(body);
-		res.cookie("rtk", refreshToken, {
+	async login(@Self() self: UserEntity, @Body() body: LoginRequestDTO, @Res({ passthrough: true }) res: Response) {
+		if (self) return;
+		const sessionId = await this.authService.createSession(body);
+		res.cookie(SESSION_COOKIE, sessionId, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "lax",
 			maxAge: 315576000000, //100Y
 		});
-		return { accessToken };
 	}
 
 	@Post("destroy")
-	async destroy(@Self() user: User, @Cookies("rtk") refreshToken: string, @Res({ passthrough: true }) res: Response) {
-		await this.authService.destroySession(user, refreshToken);
-		res.clearCookie("rtk");
+	async destroy(
+		@Self() user: UserEntity,
+		@Cookies(SESSION_COOKIE) sessionId: string,
+		@Res({ passthrough: true }) res: Response,
+	) {
+		await this.authService.destroySession(user, sessionId);
+		res.clearCookie(SESSION_COOKIE);
 	}
 
-	@Public()
-	@Post("refresh")
-	async refresh(@Cookies("rtk") refreshToken: string, @Res({ passthrough: true }) res: Response) {
-		if (!refreshToken) {
-			throw new UnauthorizedException();
-		}
-		try {
-			const [accessToken, newRefreshToken] = await this.authService.refreshTokens(refreshToken);
-			res.cookie("rtk", newRefreshToken, {
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-				sameSite: "lax",
-				maxAge: 315576000000, //100Y
-			});
-			return { accessToken };
-		} catch (error) {
-			res.clearCookie("rtk");
-			throw error;
-		}
-	}
+	@Post("/ping")
+	@HttpCode(HttpStatus.OK)
+	update() {}
 
 	@Put("password")
-	async changePassword(@Self() user: User, @Body() body: ChangePasswordDTO) {
+	async changePassword(@Self() user: UserEntity, @Body() body: ChangePasswordRequestDTO) {
 		await this.authService.changePassword(user, body);
 	}
 }

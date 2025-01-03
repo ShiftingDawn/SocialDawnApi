@@ -4,9 +4,10 @@ import { AppModule } from "./app.module";
 import * as cookieParser from "cookie-parser";
 import { ValidationError } from "class-validator";
 import { CORS_OPTIONS } from "./constants";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create<NestExpressApplication>(AppModule);
 	app.useGlobalPipes(
 		new ValidationPipe({
 			whitelist: true,

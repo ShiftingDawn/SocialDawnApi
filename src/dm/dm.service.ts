@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { User } from "../user/user.entity";
+import { UserEntity } from "../user/user.entity";
 import { UserService } from "../user/user.service";
 import { FriendService } from "../friend/friend.service";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -21,7 +21,7 @@ export class DmService {
 		private readonly dmMessageRepository: Repository<DmMessage>,
 	) {}
 
-	getDmByUserAndId(user: User, dmId: string): Promise<Dm | null> {
+	getDmByUserAndId(user: UserEntity, dmId: string): Promise<Dm | null> {
 		return this.dmRepository.findOne({
 			where: [
 				{ dmId, user1: user },
@@ -31,14 +31,14 @@ export class DmService {
 		});
 	}
 
-	getExistingDms(user: User) {
+	getExistingDms(user: UserEntity) {
 		return this.dmRepository.find({
 			where: [{ user1: user }, { user2: user }],
 			relations: ["user1", "user2"],
 		});
 	}
 
-	async getFriendDm(user: User, friendId: string): Promise<DmDTO> {
+	async getFriendDm(user: UserEntity, friendId: string): Promise<DmDTO> {
 		const friend = await this.friendService.getFriend(user, friendId);
 		if (!friend) {
 			throw new NotFoundException();
@@ -65,7 +65,7 @@ export class DmService {
 		};
 	}
 
-	async addMessageToDm(user: User, dmId: string, message: string): Promise<DmMessage> {
+	async addMessageToDm(user: UserEntity, dmId: string, message: string): Promise<DmMessage> {
 		const dm = await this.getDmByUserAndId(user, dmId);
 		if (!dm) {
 			throw new NotFoundException();
@@ -79,7 +79,7 @@ export class DmService {
 		return msg;
 	}
 
-	async getMessagesForDm(user: User, dmId: string, last: string, take: number): Promise<DmMessageDTO[]> {
+	async getMessagesForDm(user: UserEntity, dmId: string, last: string, take: number): Promise<DmMessageDTO[]> {
 		const dm = await this.dmRepository.findOneBy([
 			{ dmId, user1: user },
 			{ dmId, user2: user },

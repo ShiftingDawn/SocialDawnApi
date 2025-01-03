@@ -1,24 +1,21 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
-import { LoginDTO } from "./login.dto";
-import { UserService } from "../user/user.service";
-import { User } from "../user/user.entity";
+import { ChangePasswordRequestDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
+import { UserService } from "@/user/user.service";
+import { UserEntity } from "@/user/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Session } from "./session.entity";
 import { Repository } from "typeorm";
-import { ChangePasswordDTO } from "./changepassword.dto";
 
 @Injectable()
 export class AuthService {
 	constructor(
-		private readonly jwtService: JwtService,
 		private readonly userService: UserService,
 		@InjectRepository(Session)
 		private readonly sessionRepository: Repository<Session>,
 	) {}
 
-	async login(data: LoginDTO): Promise<[string, string]> {
+	async createSession(data: LoginRequestDTO): Promise<string> {
 		const user = await this.userService.getUserByEmail(data.email);
 		if (!user) {
 			throw new NotFoundException("User not found");
@@ -26,33 +23,38 @@ export class AuthService {
 		if (!bcrypt.compareSync(data.password, user.password)) {
 			throw new UnauthorizedException();
 		}
-		return await this.createTokens(user);
-	}
-
-	async destroySession(user: User, refreshToken: string) {
-		await this.sessionRepository.delete({ user: user, refreshToken: refreshToken });
-	}
-
-	async createTokens(user: User): Promise<[string, string]> {
-		const accessToken = await this.jwtService.signAsync({ sub: user.userId });
 		const expiresAt = new Date();
 		expiresAt.setDate(expiresAt.getDate() + 7);
 		const session = this.sessionRepository.create({ user, expiresAt });
 		await this.sessionRepository.save(session);
-		return [accessToken, session.refreshToken];
+		return session.sessionId;
 	}
 
-	async refreshTokens(refreshToken: string): Promise<[string, string]> {
-		const session = await this.sessionRepository.findOne({ where: { refreshToken }, relations: ["user"] });
-		if (!session) {
+	async updateSession(sessionId: string) {
+		const session = await this.getSessionById(sessionId);
+		if (!session) throw new UnauthorizedException();
+		if (Date.now() >= session.expiresAt.getTime()) {
+			await this.sessionRepository.delete({ sessionId: sessionId });
 			throw new UnauthorizedException();
+		} else {
+			session.expiresAt = new Date();
+			session.expiresAt.setDate(session.expiresAt.getDate() + 7);
+			await this.sessionRepository.save(session);
 		}
-		const newTokens = await this.createTokens(session.user);
-		await this.sessionRepository.delete({ refreshToken });
-		return newTokens;
 	}
 
-	async changePassword(user: User, data: ChangePasswordDTO) {
+	async destroySession(user: UserEntity, sessionId: string) {
+		await this.sessionRepository.delete({ user, sessionId });
+	}
+
+	getSessionById(sessionId: string): Promise<Session | null> {
+		return this.sessionRepository.findOne({
+			where: { sessionId },
+			relations: ["user"],
+		});
+	}
+
+	async changePassword(user: UserEntity, data: ChangePasswordRequestDTO) {
 		if (!bcrypt.compareSync(data.oldPassword, user.password)) {
 			throw new UnauthorizedException();
 		}

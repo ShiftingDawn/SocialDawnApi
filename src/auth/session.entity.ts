@@ -1,15 +1,15 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "../user/user.entity";
+import { UserEntity } from "@/user/user.entity";
 
 @Entity()
 export class Session {
-	@PrimaryGeneratedColumn("uuid")
-	refreshToken: string;
+	@PrimaryGeneratedColumn("uuid", { name: "id" })
+	sessionId: string;
 
 	@Column()
 	expiresAt: Date;
 
-	@ManyToOne(() => User)
+	@ManyToOne(() => UserEntity)
 	@JoinColumn({ name: "user_id" })
-	user: User;
+	user: UserEntity;
 }

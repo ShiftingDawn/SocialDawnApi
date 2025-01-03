@@ -1,18 +1,18 @@
 import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "../user/user.entity";
+import { UserEntity } from "../user/user.entity";
 
 @Entity()
 export class FriendRequest {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	friendRequestId: string;
 
-	@ManyToOne(() => User, (user) => user.sentFriendRequests)
+	@ManyToOne(() => UserEntity, (user) => user.sentFriendRequests)
 	@JoinColumn({ name: "sender_id" })
-	sender: User;
+	sender: UserEntity;
 
-	@ManyToOne(() => User, (user) => user.receivedFriendRequests)
+	@ManyToOne(() => UserEntity, (user) => user.receivedFriendRequests)
 	@JoinColumn({ name: "receiver_id" })
-	receiver: User;
+	receiver: UserEntity;
 
 	@CreateDateColumn()
 	createdAt: Date;
