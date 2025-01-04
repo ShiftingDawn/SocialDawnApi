@@ -16,6 +16,7 @@ import { AppGateway } from "./app.gateway";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { AuthRefreshMiddleware } from "@/auth/auth.middleware";
+import { TotpEntity } from "@/auth/totp.entity";
 
 @Module({
 	imports: [
@@ -26,7 +27,7 @@ import { AuthRefreshMiddleware } from "@/auth/auth.middleware";
 			username: "socialdawn",
 			password: "socialdawn",
 			database: "socialdawn",
-			entities: [UserEntity, Session, FriendRequestEntity, FriendEntity, DmEntity, DmMessageEntity],
+			entities: [UserEntity, Session, TotpEntity, FriendRequestEntity, FriendEntity, DmEntity, DmMessageEntity],
 			synchronize: process.env.NODE_ENV === "development",
 			namingStrategy: new SnakeNamingStrategy(),
 		}),

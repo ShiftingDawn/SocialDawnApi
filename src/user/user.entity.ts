@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Session } from "@/auth/session.entity";
 import { FriendRequestEntity } from "@/friend/friendrequest.entity";
 import { FriendEntity } from "@/friend/friend.entity";
+import { TotpEntity } from "@/auth/totp.entity";
 
 @Entity("user")
 export class UserEntity {
@@ -19,6 +20,9 @@ export class UserEntity {
 
 	@OneToMany(() => Session, (session) => session.user)
 	sessions: Session[];
+
+	@OneToOne(() => TotpEntity, (totp) => totp.user)
+	totp: TotpEntity;
 
 	@OneToMany(() => FriendRequestEntity, (session) => session.sender)
 	sentFriendRequests: FriendRequestEntity[];

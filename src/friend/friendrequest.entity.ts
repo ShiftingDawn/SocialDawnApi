@@ -1,7 +1,7 @@
 import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserEntity } from "@/user/user.entity";
 
-@Entity()
+@Entity("friend_request")
 export class FriendRequestEntity {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	friendRequestId: string;

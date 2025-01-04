@@ -38,3 +38,19 @@ export class ChangePasswordRequestDTO {
 	@Allow()
 	confirmPassword: string;
 }
+
+export class OneTimeCodeRequestDTO {
+	@IsString()
+	@IsNotEmpty()
+	code: string;
+}
+
+export class LoginCodeRequestDTO {
+	@IsString()
+	@IsNotEmpty()
+	token: string;
+
+	@IsString()
+	@IsNotEmpty()
+	code: string;
+}
