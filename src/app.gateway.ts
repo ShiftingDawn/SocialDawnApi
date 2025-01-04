@@ -6,7 +6,6 @@ import { Self } from "./self.decorator";
 import { UserEntity } from "./user/user.entity";
 import { DmService } from "./dm/dm.service";
 import { Server, Socket } from "socket.io";
-import { DmMessageDTO } from "./dm/dmmessage.dto";
 
 @WebSocketGateway({ cors: CORS_OPTIONS, transports: ["polling"] })
 @UseGuards(AuthGuard)
@@ -39,13 +38,18 @@ export class AppGateway {
 	}
 
 	@SubscribeMessage("dm_msg")
-	async receiveDmMessage(@Self() user: UserEntity, @MessageBody("dm") dmId: string, @MessageBody("msg") message: string) {
+	async receiveDmMessage(
+		@Self() user: UserEntity,
+		@MessageBody("dm") dmId: string,
+		@MessageBody("msg") message: string,
+	) {
 		if (!user || !dmId || !message) {
 			return;
 		}
 		const msg = await this.dmService.addMessageToDm(user, dmId, message);
 		if (msg) {
-			this.server.to(dmId).emit("message", new DmMessageDTO(msg));
+			//TODO implement
+			// this.server.to(dmId).emit("message", new DmMessageDTO(msg));
 		}
 		return "ok";
 	}

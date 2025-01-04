@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserEntity } from "@/user/user.entity";
 
-@Entity()
+@Entity("session")
 export class Session {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	sessionId: string;

@@ -7,12 +7,11 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { Session } from "./auth/session.entity";
 import { FriendModule } from "./friend/friend.module";
-import { FriendRequest } from "./friend/friendrequest.entity";
+import { FriendRequestEntity } from "./friend/friendrequest.entity";
 import { FriendEntity } from "./friend/friend.entity";
 import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 import { DmModule } from "./dm/dm.module";
-import { Dm } from "./dm/dm.entity";
-import { DmMessage } from "./dm/dmmessage.entity";
+import { DmEntity, DmMessageEntity } from "./dm/dm.entity";
 import { AppGateway } from "./app.gateway";
 import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
@@ -27,7 +26,7 @@ import { AuthRefreshMiddleware } from "@/auth/auth.middleware";
 			username: "socialdawn",
 			password: "socialdawn",
 			database: "socialdawn",
-			entities: [UserEntity, Session, FriendRequest, FriendEntity, Dm, DmMessage],
+			entities: [UserEntity, Session, FriendRequestEntity, FriendEntity, DmEntity, DmMessageEntity],
 			synchronize: process.env.NODE_ENV === "development",
 			namingStrategy: new SnakeNamingStrategy(),
 		}),

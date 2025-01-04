@@ -1,8 +1,8 @@
 import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { UserEntity } from "../user/user.entity";
+import { UserEntity } from "@/user/user.entity";
 
 @Entity()
-export class FriendRequest {
+export class FriendRequestEntity {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	friendRequestId: string;
 

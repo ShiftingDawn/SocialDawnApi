@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Session } from "@/auth/session.entity";
-import { FriendRequest } from "@/friend/friendrequest.entity";
+import { FriendRequestEntity } from "@/friend/friendrequest.entity";
 import { FriendEntity } from "@/friend/friend.entity";
 
 @Entity("user")
@@ -20,11 +20,11 @@ export class UserEntity {
 	@OneToMany(() => Session, (session) => session.user)
 	sessions: Session[];
 
-	@OneToMany(() => FriendRequest, (session) => session.sender)
-	sentFriendRequests: FriendRequest[];
+	@OneToMany(() => FriendRequestEntity, (session) => session.sender)
+	sentFriendRequests: FriendRequestEntity[];
 
-	@OneToMany(() => FriendRequest, (session) => session.receiver)
-	receivedFriendRequests: FriendRequest[];
+	@OneToMany(() => FriendRequestEntity, (session) => session.receiver)
+	receivedFriendRequests: FriendRequestEntity[];
 
 	@OneToMany(() => FriendEntity, (friend) => friend.user1)
 	friends: FriendEntity[];

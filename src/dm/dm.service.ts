@@ -1,27 +1,56 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { UserEntity } from "../user/user.entity";
-import { UserService } from "../user/user.service";
-import { FriendService } from "../friend/friend.service";
+import { UserEntity } from "@/user/user.entity";
+import { UserService } from "@/user/user.service";
+import { FriendService } from "@/friend/friend.service";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Dm } from "./dm.entity";
+import { DmEntity, DmMessageEntity } from "./dm.entity";
 import { LessThan, Repository } from "typeorm";
-import { DmMessage } from "./dmmessage.entity";
-import { DmDTO } from "./dm.dto";
-import { DmMessageDTO } from "./dmmessage.dto";
-import { getGravatarLink } from "../utils";
+import { oneOf, wrap } from "@/utils";
+import { Dm, DmMessage } from "@/dm/dm.graphql";
 
 @Injectable()
 export class DmService {
 	constructor(
 		private readonly userService: UserService,
 		private readonly friendService: FriendService,
-		@InjectRepository(Dm)
-		private readonly dmRepository: Repository<Dm>,
-		@InjectRepository(DmMessage)
-		private readonly dmMessageRepository: Repository<DmMessage>,
+		@InjectRepository(DmEntity)
+		private readonly dmRepository: Repository<DmEntity>,
+		@InjectRepository(DmMessageEntity)
+		private readonly dmMessageRepository: Repository<DmMessageEntity>,
 	) {}
 
-	getDmByUserAndId(user: UserEntity, dmId: string): Promise<Dm | null> {
+	async getDms(user: UserEntity): Promise<Dm[]> {
+		const entities = await this.dmRepository.find({
+			where: [{ user1: user }, { user2: user }],
+			relations: ["user1", "user2"],
+		});
+		return entities.map((entity) => {
+			const dmUser = entity.user1.userId === user.userId ? entity.user2 : entity.user1;
+			return {
+				id: entity.dmId,
+				user: wrap(this.userService.map(dmUser)!),
+				messages: this.getMessagesForDm(user, entity.dmId, null, 50),
+			};
+		});
+	}
+
+	async getDm(user: UserEntity, dmId: string): Promise<Dm> {
+		const result = await this.dmRepository.findOne({
+			where: [
+				{ dmId: dmId, user1: user },
+				{ dmId: dmId, user2: user },
+			],
+			relations: ["user1", "user2"],
+		});
+		if (!result) throw new NotFoundException();
+		return {
+			id: result.dmId,
+			user: wrap(this.userService.map(oneOf(result.user1, result.user2, "userId", user.userId))),
+			messages: this.getMessagesForDm(user, result.dmId, null, 50),
+		};
+	}
+
+	getDmByUserAndId(user: UserEntity, dmId: string): Promise<DmEntity | null> {
 		return this.dmRepository.findOne({
 			where: [
 				{ dmId, user1: user },
@@ -31,22 +60,10 @@ export class DmService {
 		});
 	}
 
-	getExistingDms(user: UserEntity) {
-		return this.dmRepository.find({
-			where: [{ user1: user }, { user2: user }],
-			relations: ["user1", "user2"],
-		});
-	}
-
-	async getFriendDm(user: UserEntity, friendId: string): Promise<DmDTO> {
+	async makeFriendDm(user: UserEntity, friendId: string): Promise<Dm> {
 		const friend = await this.friendService.getFriend(user, friendId);
-		if (!friend) {
-			throw new NotFoundException();
-		}
-		const friendUser = await this.userService.getUserById(friendId);
-		if (!friendUser) {
-			throw new NotFoundException();
-		}
+		if (!friend) throw new NotFoundException();
+		const friendUser = oneOf(friend.user1, friend.user2, "userId", user.userId);
 		let dm = await this.dmRepository.findOneBy([
 			{ user1: user, user2: friendUser },
 			{ user1: friendUser, user2: user },
@@ -59,13 +76,13 @@ export class DmService {
 			await this.dmRepository.save(dm);
 		}
 		return {
-			dmId: dm.dmId,
-			name: friendUser.username,
-			thumbnail: getGravatarLink(friendUser.email),
+			id: dm.dmId,
+			user: wrap(this.userService.map(friendUser)),
+			messages: this.getMessages(dm, null, 10),
 		};
 	}
 
-	async addMessageToDm(user: UserEntity, dmId: string, message: string): Promise<DmMessage> {
+	async addMessageToDm(user: UserEntity, dmId: string, message: string): Promise<DmMessageEntity> {
 		const dm = await this.getDmByUserAndId(user, dmId);
 		if (!dm) {
 			throw new NotFoundException();
@@ -79,14 +96,7 @@ export class DmService {
 		return msg;
 	}
 
-	async getMessagesForDm(user: UserEntity, dmId: string, last: string, take: number): Promise<DmMessageDTO[]> {
-		const dm = await this.dmRepository.findOneBy([
-			{ dmId, user1: user },
-			{ dmId, user2: user },
-		]);
-		if (!dm) {
-			throw new NotFoundException();
-		}
+	async getMessages(dm: DmEntity, last: string | null, take: number): Promise<DmMessage[]> {
 		let messages;
 		if (!last) {
 			messages = await this.dmMessageRepository.find({
@@ -108,11 +118,20 @@ export class DmService {
 			});
 		}
 		return messages.map((msg) => ({
-			messageId: msg.messageId,
-			username: msg.sender.username,
+			id: msg.messageId,
+			sender: wrap(this.userService.map(msg.sender)),
 			responseTo: null,
-			sendAt: msg.sentAt.getTime(),
-			message: msg.message,
+			sentAt: msg.sentAt,
+			content: msg.message,
 		}));
+	}
+
+	async getMessagesForDm(user: UserEntity, dmId: string, last: string | null, take: number): Promise<DmMessage[]> {
+		const dm = await this.dmRepository.findOneBy([
+			{ dmId, user1: user },
+			{ dmId, user2: user },
+		]);
+		if (!dm) throw new NotFoundException();
+		return await this.getMessages(dm, last, take);
 	}
 }

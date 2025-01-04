@@ -1,70 +1,50 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { FriendRequest } from "./friendrequest.entity";
+import { FriendRequestEntity } from "./friendrequest.entity";
 import { Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FriendEntity } from "./friend.entity";
 import { UserService } from "@/user/user.service";
 import { UserEntity } from "@/user/user.entity";
-import { getGravatarLink } from "@/utils";
-import { FriendDTO, FriendRequestResponseDTO } from "@/friend/friend.res-dto";
+import { oneOf, wrap } from "@/utils";
 import { AddFriendDTO } from "@/friend/friend.req-dto";
-import { Friend } from "@/friend/friend.graphql";
-import { User } from "@/user/user.graphql";
+import { Friend, FriendRequest, FriendRequestList } from "@/friend/friend.graphql";
 
 @Injectable()
 export class FriendService {
 	constructor(
 		private readonly userService: UserService,
-		@InjectRepository(FriendRequest)
-		private readonly friendRequestRepository: Repository<FriendRequest>,
+		@InjectRepository(FriendRequestEntity)
+		private readonly friendRequestRepository: Repository<FriendRequestEntity>,
 		@InjectRepository(FriendEntity)
 		private readonly friendRepository: Repository<FriendEntity>,
 	) {}
 
-	async listFriends(user: UserEntity, onlineOnly: boolean): Promise<FriendDTO[]> {
+	async getFriends(user: UserEntity): Promise<Friend[]> {
 		const friends = await this.friendRepository.find({
 			where: [{ user1: user }, { user2: user }],
 			relations: ["user1", "user2"],
 		});
-		//TODO handle onlineOnly
 		return friends.map((friend) => {
-			const friendUser = user.userId === friend.user1.userId ? friend.user2 : friend.user1;
-			return {
-				friendId: friendUser.userId,
-				username: friendUser.username,
-				thumbnail: getGravatarLink(friendUser.email),
-				friendsSince: friend.createdAt.getTime(),
-			};
-		});
-	}
-
-	async getFriends(user: UserEntity): Promise<Friend[]> {
-		const friends1 = await this.friendRepository.find({
-			where: { user1: user },
-			relations: ["user2"],
-		});
-		const friends2 = await this.friendRepository.find({
-			where: { user2: user },
-			relations: ["user1"],
-		});
-		return [...friends1, ...friends2].map((friend) => {
 			const result = new Friend();
 			result.id = friend.friendId;
 			result.since = friend.createdAt;
-			result.user = this.userService.getById(friend.user1?.userId ?? friend.user2.userId) as Promise<User>;
+			result.user = wrap(this.userService.map(oneOf(friend.user1, friend.user2, "userId", user.userId)));
 			return result;
 		});
 	}
 
 	getFriend(user: UserEntity, friendId: string) {
-		return this.friendRepository.findOneBy([
-			{ user1: user, user2: { userId: friendId } },
-			{ user1: { userId: friendId }, user2: user },
-		]);
+		return this.friendRepository.findOne({
+			where: [
+				{ friendId, user1: user },
+				{ friendId, user2: user },
+			],
+			relations: ["user1", "user2"],
+		});
 	}
 
 	async addFriend(self: UserEntity, data: AddFriendDTO) {
-		const foundUser = await this.userService.getUserByUsername(data.username);
+		const foundUser = await this.userService.findOneBy({ username: data.username });
 		if (!foundUser) {
 			throw new BadRequestException("invalid_username");
 		}
@@ -78,34 +58,27 @@ export class FriendService {
 		await this.friendRequestRepository.save(request);
 	}
 
-	async getReceivedFriendRequests(user: UserEntity): Promise<FriendRequestResponseDTO[]> {
-		const requests = await this.friendRequestRepository.find({
-			where: { receiver: user },
-			relations: ["sender"],
+	async getFriendRequestsOfType(user: UserEntity, type: "sent" | "received"): Promise<FriendRequest[]> {
+		const entities = await this.friendRequestRepository.find({
+			where: type === "sent" ? { sender: user } : { receiver: user },
+			relations: [type === "sent" ? "receiver" : "sender"],
 			order: { createdAt: "DESC" },
 		});
-		return requests.map((req) => ({
-			id: req.friendRequestId,
-			username: req.sender.username,
-			sentAt: req.createdAt.getTime(),
+		return entities.map((entity) => ({
+			id: entity.friendRequestId,
+			sentAt: entity.createdAt,
+			user: wrap(this.userService.map(oneOf(entity.sender, entity.receiver, "userId", user.userId))),
 		}));
 	}
 
-	async getReceivedFriendRequestCount(user: UserEntity) {
-		return await this.friendRequestRepository.countBy({ receiver: user });
+	async getFriendRequests(user: UserEntity): Promise<FriendRequestList> {
+		return {
+			sent: this.getFriendRequestsOfType(user, "sent"),
+			received: this.getFriendRequestsOfType(user, "received"),
+		};
 	}
 
-	async deleteReceivedFriendRequest(user: UserEntity, id: string) {
-		const result = await this.friendRequestRepository.delete({
-			friendRequestId: id,
-			receiver: user,
-		});
-		if (result.affected === 0) {
-			throw new NotFoundException();
-		}
-	}
-
-	async acceptReceivedFriendRequest(user: UserEntity, id: string) {
+	async acceptFriendRequest(user: UserEntity, id: string) {
 		const result = await this.friendRequestRepository.findOne({
 			where: {
 				friendRequestId: id,
@@ -121,33 +94,17 @@ export class FriendService {
 			user2: result.sender,
 		});
 		await this.friendRepository.save(friend);
-		await this.deleteReceivedFriendRequest(user, id);
+		await this.deleteFriendRequest(user, id);
 	}
 
-	async getSentFriendRequests(user: UserEntity): Promise<FriendRequestResponseDTO[]> {
-		const requests = await this.friendRequestRepository.find({
-			where: { sender: user },
-			relations: ["receiver"],
-			order: { createdAt: "DESC" },
-		});
-		return requests.map((req) => ({
-			id: req.friendRequestId,
-			username: req.receiver.username,
-			sentAt: req.createdAt.getTime(),
-		}));
-	}
-
-	async getSentFriendRequestCount(user: UserEntity) {
-		return await this.friendRequestRepository.countBy({ sender: user });
-	}
-
-	async deleteSentFriendRequest(user: UserEntity, id: string) {
-		const result = await this.friendRequestRepository.delete({
-			friendRequestId: id,
-			sender: user,
-		});
-		if (result.affected === 0) {
-			throw new NotFoundException();
-		}
+	async deleteFriendRequest(user: UserEntity, id: string) {
+		const result = await this.friendRequestRepository
+			.createQueryBuilder()
+			.delete()
+			.from(FriendRequestEntity)
+			.where("id = :id", { id })
+			.andWhere("(sender_id = :userId OR receiver_id = :userId)", { userId: user.userId })
+			.execute();
+		if (result.affected === 0) throw new NotFoundException();
 	}
 }

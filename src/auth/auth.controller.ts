@@ -5,7 +5,7 @@ import { Public } from "@/public";
 import { Cookies } from "@/cookies.decorator";
 import { Self } from "@/self.decorator";
 import { UserEntity } from "@/user/user.entity";
-import { ChangePasswordRequestDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
+import { ChangePasswordRequestDTO, CreateUserDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
 import { SESSION_COOKIE } from "@/constants";
 
 @Controller("auth")
@@ -23,6 +23,12 @@ export class AuthController {
 			sameSite: "lax",
 			maxAge: 315576000000, //100Y
 		});
+	}
+
+	@Public()
+	@Post("register")
+	async register(@Body() body: CreateUserDTO) {
+		await this.authService.register(body);
 	}
 
 	@Post("destroy")

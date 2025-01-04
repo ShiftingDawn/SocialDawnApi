@@ -1,16 +1,14 @@
 import { Module } from "@nestjs/common";
-import { DmController } from "./dm.controller";
 import { DmService } from "./dm.service";
-import { FriendModule } from "../friend/friend.module";
-import { UserModule } from "../user/user.module";
+import { FriendModule } from "@/friend/friend.module";
+import { UserModule } from "@/user/user.module";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Dm } from "./dm.entity";
-import { DmMessage } from "./dmmessage.entity";
+import { DmEntity, DmMessageEntity } from "./dm.entity";
+import { DmResolver } from "./dm.resolver";
 
 @Module({
-	imports: [FriendModule, UserModule, TypeOrmModule.forFeature([Dm, DmMessage])],
-	controllers: [DmController],
-	providers: [DmService],
+	imports: [FriendModule, UserModule, TypeOrmModule.forFeature([DmEntity, DmMessageEntity])],
+	providers: [DmService, DmResolver],
 	exports: [DmService],
 })
 export class DmModule {}

@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
 import { UserEntity } from "./user.entity";
 import * as bcrypt from "bcrypt";
 import { User } from "@/user/user.graphql";
 import { getGravatarLink } from "@/utils";
-import { CreateUserDTO } from "@/user/user.req-dto";
+import { CreateUserDTO } from "@/auth/auth.req-dto";
 
 @Injectable()
 export class UserService {
@@ -14,21 +14,7 @@ export class UserService {
 		private readonly userRepository: Repository<UserEntity>,
 	) {}
 
-	getUserById(userId: string): Promise<UserEntity | null> {
-		return this.userRepository.findOneBy({ userId });
-	}
-
-	getUserByEmail(email: string) {
-		return this.userRepository.findOneBy({ email });
-	}
-
-	getUserByUsername(username: string) {
-		return this.userRepository.findOneBy({ username });
-	}
-
-	async getById(id: string): Promise<User | null> {
-		const entity = await this.userRepository.findOneBy({ userId: id });
-		if (!entity) return null;
+	map(entity: UserEntity): User {
 		return {
 			id: entity.userId,
 			username: entity.username,
@@ -36,8 +22,12 @@ export class UserService {
 		};
 	}
 
-	async register(data: CreateUserDTO): Promise<void> {
-		const existingUser = await this.getUserByEmail(data.email);
+	findOneBy(data: FindOptionsWhere<UserEntity>): Promise<UserEntity | null> {
+		return this.userRepository.findOneBy(data);
+	}
+
+	async createUser(data: CreateUserDTO): Promise<void> {
+		const existingUser = await this.findOneBy({ email: data.email });
 		if (existingUser) {
 			throw new BadRequestException("User already exists");
 		}

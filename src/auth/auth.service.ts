@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
-import { ChangePasswordRequestDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
+import { ChangePasswordRequestDTO, CreateUserDTO, LoginRequestDTO } from "@/auth/auth.req-dto";
 import { UserService } from "@/user/user.service";
 import { UserEntity } from "@/user/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -16,7 +16,7 @@ export class AuthService {
 	) {}
 
 	async createSession(data: LoginRequestDTO): Promise<string> {
-		const user = await this.userService.getUserByEmail(data.email);
+		const user = await this.userService.findOneBy({ email: data.email });
 		if (!user) {
 			throw new NotFoundException("User not found");
 		}
@@ -52,6 +52,10 @@ export class AuthService {
 			where: { sessionId },
 			relations: ["user"],
 		});
+	}
+
+	register(data: CreateUserDTO): Promise<void> {
+		return this.userService.createUser(data);
 	}
 
 	async changePassword(user: UserEntity, data: ChangePasswordRequestDTO) {
