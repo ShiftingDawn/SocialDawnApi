@@ -20,13 +20,10 @@ export class AuthGuard implements CanActivate {
 			return true;
 		}
 		const sessionId = this.extractSessionId(context);
-		if (!sessionId) {
-			throw new UnauthorizedException();
-		}
+		if (!sessionId) throw new UnauthorizedException();
+
 		const session = await this.authService.getSessionById(sessionId);
-		if (!session) {
-			throw new UnauthorizedException();
-		}
+		if (!session) throw new UnauthorizedException();
 
 		this.setUser(context, session?.user);
 		return true;
@@ -65,9 +62,11 @@ export class AuthGuard implements CanActivate {
 	private extractSessionIdWs(client: Socket): string | undefined {
 		const cookie = client.handshake.headers.cookie;
 		if (!cookie) return undefined;
+
 		const cookies = cookie.split(";");
 		const sessionCookie = cookies.find((c) => c.indexOf(`${SESSION_COOKIE}=`) === 0);
 		if (!sessionCookie) return undefined;
+
 		return sessionCookie.substring(`${SESSION_COOKIE}=`.length);
 	}
 
