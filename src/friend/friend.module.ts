@@ -6,9 +6,10 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { FriendRequestEntity } from "./friendrequest.entity";
 import { FriendEntity } from "./friend.entity";
 import { FriendResolver } from "./friend.resolver";
+import { DmModule } from "@/dm/dm.module";
 
 @Module({
-	imports: [forwardRef(() => UserModule), TypeOrmModule.forFeature([FriendRequestEntity, FriendEntity])],
+	imports: [forwardRef(() => UserModule), TypeOrmModule.forFeature([FriendRequestEntity, FriendEntity]), DmModule],
 	providers: [FriendService, FriendResolver],
 	controllers: [FriendController],
 	exports: [FriendService],

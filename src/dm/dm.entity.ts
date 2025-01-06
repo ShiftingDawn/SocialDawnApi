@@ -9,22 +9,21 @@ import {
 	PrimaryGeneratedColumn,
 } from "typeorm";
 import { UserEntity } from "@/user/user.entity";
+import { FriendEntity } from "@/friend/friend.entity";
 
 @Entity("dm")
 export class DmEntity {
 	@PrimaryGeneratedColumn("uuid", { name: "id" })
 	dmId: string;
 
-	@OneToOne(() => UserEntity)
-	@JoinColumn({ name: "user1_id" })
-	user1: UserEntity;
-
-	@OneToOne(() => UserEntity)
-	@JoinColumn({ name: "user2_id" })
-	user2: UserEntity;
-
 	@OneToMany(() => DmMessageEntity, (msg) => msg.dm)
 	messages: DmMessageEntity[];
+
+	@Column({ default: "now()" })
+	lastUpdate: Date;
+
+	@OneToOne(() => FriendEntity, (friend) => friend.dm, { nullable: true })
+	owningFriend: FriendEntity | null;
 }
 
 @Entity("dm_message")

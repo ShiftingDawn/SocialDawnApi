@@ -1,5 +1,6 @@
-import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { UserEntity } from "@/user/user.entity";
+import { DmEntity } from "@/dm/dm.entity";
 
 @Entity("friend")
 export class FriendEntity {
@@ -16,4 +17,8 @@ export class FriendEntity {
 
 	@CreateDateColumn()
 	createdAt: Date;
+
+	@OneToOne(() => DmEntity, (dm) => dm.owningFriend, { nullable: false })
+	@JoinColumn({ name: "dm_id" })
+	dm: DmEntity;
 }

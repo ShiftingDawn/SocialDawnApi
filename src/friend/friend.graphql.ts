@@ -1,5 +1,6 @@
 import { Field, ID, ObjectType } from "@nestjs/graphql";
 import { User } from "@/user/user.graphql";
+import { Dm } from "@/dm/dm.graphql";
 
 @ObjectType()
 export class Friend {
@@ -11,6 +12,9 @@ export class Friend {
 
 	@Field({ nullable: false })
 	since: Date;
+
+	@Field(() => Dm, { nullable: false })
+	dm: Promise<Dm>;
 }
 
 @ObjectType()

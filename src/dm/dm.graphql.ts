@@ -6,11 +6,11 @@ export class Dm {
 	@Field(() => ID, { nullable: false })
 	id: string;
 
-	@Field(() => User, { nullable: false })
-	user: Promise<User>;
-
 	@Field(() => [DmMessage], { nullable: false })
 	messages: Promise<DmMessage[]>;
+
+	@Field({ nullable: false })
+	lastUpdate: Date;
 }
 
 @ObjectType()
